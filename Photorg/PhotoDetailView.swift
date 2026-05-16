@@ -11,6 +11,7 @@ struct PhotoDetailView: View {
     @State private var editing = false
     @State private var showShare = false
     @State private var shareItems: [Any] = []
+    @State private var showingCountPicker = false
 
     var body: some View {
         ZStack {
@@ -28,22 +29,61 @@ struct PhotoDetailView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                if editing {
-                    Button("Done") { editing = false }.bold()
+            ToolbarItem(placement: .topBarLeading) {
+                if photo.count > 1 {
+                    Button {
+                        showingCountPicker = true
+                    } label: {
+                        Text("\(photo.count)")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Color.accentColor, in: Capsule())
+                    }
                 } else {
-                    Menu {
-                        Button("Crop", systemImage: "crop") { editing = true }
+                    Button {
+                        showingCountPicker = true
+                    } label: {
+                        Image(systemName: "number")
+                            .foregroundStyle(.white)
+                    }
+                }
+            }
+            ToolbarItem(placement: .principal) {
+                if editing {
+                    Button("Done") { editing = false }.bold().foregroundStyle(.white)
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 16) {
+                    if editing {
                         if photo.cropRect != nil {
-                            Button("Reset crop", systemImage: "arrow.uturn.backward") {
+                            Button("Reset") {
                                 photo.cropRect = nil
                             }
+                            .foregroundStyle(.white)
                         }
-                        Button("Export cropped", systemImage: "square.and.arrow.up") { exportCropped() }
-                        Button("Export original", systemImage: "square.and.arrow.up.on.square") { exportOriginal() }
-                        Button("Delete", systemImage: "trash", role: .destructive) { deletePhoto() }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                    } else {
+                        Button {
+                            editing = true
+                        } label: {
+                            Image(systemName: "crop")
+                                .foregroundStyle(.white)
+                        }
+                        Menu {
+                            Button("Export cropped", systemImage: "square.and.arrow.up") { exportCropped() }
+                            Button("Export original", systemImage: "square.and.arrow.up.on.square") { exportOriginal() }
+                            if photo.cropRect != nil {
+                                Button("Reset crop", systemImage: "arrow.uturn.backward") {
+                                    photo.cropRect = nil
+                                }
+                            }
+                            Button("Delete", systemImage: "trash", role: .destructive) { deletePhoto() }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .foregroundStyle(.white)
+                        }
                     }
                 }
             }
@@ -54,14 +94,28 @@ struct PhotoDetailView: View {
         .sheet(isPresented: $showShare) {
             ShareSheet(items: shareItems)
         }
+        .sheet(isPresented: $showingCountPicker) {
+            CountPickerSheet(photo: photo)
+        }
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// Binding that defaults to the full image when no crop is set yet.
     private func bindingRect(for img: UIImage) -> Binding<CGRect> {
         Binding(
-            get: { photo.cropRect ?? CGRect(x: 0, y: 0, width: 1, height: 1) },
-            set: { photo.cropRect = ($0 == CGRect(x: 0, y: 0, width: 1, height: 1)) ? nil : $0 }
+            get: {
+                if let existing = photo.cropRect {
+                    return existing
+                }
+                return CGRect(x: 0.05, y: 0.05, width: 0.9, height: 0.9)
+            },
+            set: { newValue in
+                let full = CGRect(x: 0, y: 0, width: 1, height: 1)
+                if newValue == full || (newValue.origin == CGPoint.zero && newValue.size == CGSize(width: 0.9, height: 0.9)) {
+                    photo.cropRect = nil
+                } else {
+                    photo.cropRect = newValue
+                }
+            }
         )
     }
 
@@ -82,6 +136,27 @@ struct PhotoDetailView: View {
         ImageStore.delete(photo.id)
         context.delete(photo)
         dismiss()
+    }
+}
+
+struct CountPickerSheet: View {
+    @Bindable var photo: Photo
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Stepper("Count: \(photo.count)", value: $photo.count, in: 1...99)
+            }
+            .navigationTitle("Item Count")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.height(200)])
     }
 }
 

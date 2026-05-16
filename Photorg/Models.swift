@@ -8,6 +8,7 @@ final class PhotoCollection {
     var name: String
     var note: String
     var createdAt: Date
+    var coverPhotoID: UUID?
 
     @Relationship(deleteRule: .cascade, inverse: \Photo.collection)
     var photos: [Photo] = []
@@ -18,21 +19,31 @@ final class PhotoCollection {
         self.note = note
         self.createdAt = Date()
     }
+
+    var coverPhoto: Photo? {
+        if let coverID = coverPhotoID {
+            return photos.first { $0.id == coverID }
+        }
+        return photos.sorted(by: { $0.capturedAt > $1.capturedAt }).first
+    }
+
+    var photoCount: Int { photos.count }
+    var itemCount: Int { photos.reduce(0) { $0 + $1.count } }
+    var earliestPhoto: Date? { photos.min(by: { $0.capturedAt < $1.capturedAt })?.capturedAt }
+    var latestPhoto: Date? { photos.max(by: { $0.capturedAt < $1.capturedAt })?.capturedAt }
 }
 
 @Model
 final class Photo {
     @Attribute(.unique) var id: UUID
     var capturedAt: Date
+    var count: Int = 1
 
-    // Non-destructive crop, normalized 0…1 in image coordinates (origin top-left).
-    // nil means "no crop" — show the full original.
     var cropX: Double?
     var cropY: Double?
     var cropW: Double?
     var cropH: Double?
 
-    // Stored EXIF orientation (1…8) of the original file; used to render correctly.
     var orientationRaw: Int
 
     var collection: PhotoCollection?
@@ -41,6 +52,7 @@ final class Photo {
         self.id = UUID()
         self.capturedAt = Date()
         self.orientationRaw = orientation
+        self.count = 1
     }
 
     var cropRect: CGRect? {

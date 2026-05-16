@@ -11,6 +11,7 @@
 		2BD96D40D5B091C22B865BCE /* CropRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AD7A23B0C8057E529515E2 /* CropRenderer.swift */; };
 		415B85FB296D764D89D0B3ED /* PhotoDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9B59F93725F395B286F7735 /* PhotoDetailView.swift */; };
 		62CEB53D4A3A52BA46D325AE /* ImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8D97108BD7D8C3EE52FFCD /* ImageStore.swift */; };
+		64B4DEB20931C007BC643233 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5BE9F55427ED29247476F76 /* Assets.xcassets */; };
 		80B559580BFDBC553330925F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EC3FB6BCE7FEDF43FDBB4D /* Models.swift */; };
 		D214306B1527C83F61E7CB14 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C573DBE4E997DAD59AB9AE7 /* CameraView.swift */; };
 		D9DB0B2EA75D4E5B593309FC /* CropEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FCC8CF14261C2B4C2003146 /* CropEditor.swift */; };
@@ -27,6 +28,7 @@
 		92D2B95920E8A1AB7637C15E /* PhotorgApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotorgApp.swift; sourceTree = "<group>"; };
 		9FCC8CF14261C2B4C2003146 /* CropEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropEditor.swift; sourceTree = "<group>"; };
 		A54C76E1294609B2F789623B /* CollectionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionDetailView.swift; sourceTree = "<group>"; };
+		B5BE9F55427ED29247476F76 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CC8D97108BD7D8C3EE52FFCD /* ImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStore.swift; sourceTree = "<group>"; };
 		F38A3F1753B0B22EF1F2FC9A /* Photorg.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Photorg.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9B59F93725F395B286F7735 /* PhotoDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoDetailView.swift; sourceTree = "<group>"; };
@@ -36,6 +38,7 @@
 		CBB3E6182713FE0D671368E0 /* Photorg */ = {
 			isa = PBXGroup;
 			children = (
+				B5BE9F55427ED29247476F76 /* Assets.xcassets */,
 				7C573DBE4E997DAD59AB9AE7 /* CameraView.swift */,
 				A54C76E1294609B2F789623B /* CollectionDetailView.swift */,
 				04B27DEE13490B5EC046D95F /* CollectionsListView.swift */,
@@ -74,6 +77,7 @@
 			buildConfigurationList = 20BC162ECF8DF2C872E1E35F /* Build configuration list for PBXNativeTarget "Photorg" */;
 			buildPhases = (
 				C6F31635ECAB6EA8470B6D67 /* Sources */,
+				CF29623BF0F911399721E497 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -118,6 +122,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CF29623BF0F911399721E497 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				64B4DEB20931C007BC643233 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C6F31635ECAB6EA8470B6D67 /* Sources */ = {
@@ -203,6 +218,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Photorg/Info.plist;
@@ -287,6 +303,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Photorg/Info.plist;

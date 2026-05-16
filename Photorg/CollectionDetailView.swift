@@ -15,7 +15,7 @@ struct CollectionDetailView: View {
 
     @State private var showingCamera = false
     @State private var pickerItems: [PhotosPickerItem] = []
-    @State private var sortOption: PhotoSortOption = .newestFirst
+    @AppStorage("photoSortOption") private var sortOption: PhotoSortOption = .newestFirst
     @State private var isSelecting = false
     @State private var selectedPhotos: Set<Photo> = []
 

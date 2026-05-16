@@ -261,7 +261,7 @@ struct CollectionCard: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(16)
-        .glassEffect(.regular.interactive(), shape: .rect(cornerRadius: 16))
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
@@ -288,15 +288,18 @@ struct CollectionCard: View {
     }
 
     private func loadCover() async {
-        guard let cover = collection.coverPhoto else {
+        if let cover = collection.coverPhoto {
+            let coverID = cover.id
+            let rect = cover.cropRect
+            let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
+                guard let img = ImageStore.loadImage(for: coverID) else { return nil }
+                return CropRenderer.render(image: img, normalizedRect: rect)
+            }
+            if let img = await task.value {
+                coverImage = img
+            }
+        } else {
             coverImage = nil
-            return
-        }
-        if let img = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-            guard let img = ImageStore.loadImage(for: cover.id) else { return nil }
-            return CropRenderer.render(image: img, normalizedRect: cover.cropRect)
-        }.value {
-            coverImage = img
         }
     }
 }
@@ -356,10 +359,13 @@ struct CoverThumb: View {
         .aspectRatio(1, contentMode: .fill)
         .clipped()
         .task(id: photo.id) {
-            if let img = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-                guard let img = ImageStore.loadImage(for: photo.id) else { return nil }
-                return CropRenderer.render(image: img, normalizedRect: photo.cropRect)
-            }.value {
+            let photoID = photo.id
+            let rect = photo.cropRect
+            let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
+                guard let img = ImageStore.loadImage(for: photoID) else { return nil }
+                return CropRenderer.render(image: img, normalizedRect: rect)
+            }
+            if let img = await task.value {
                 image = img
             }
         }

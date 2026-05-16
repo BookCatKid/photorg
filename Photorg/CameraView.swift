@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+@preconcurrency import AVFoundation
 import UIKit
 
 /// Full-screen in-app camera. On capture, calls `onCapture(data, orientation)` with the
@@ -74,8 +75,7 @@ struct CameraPreview: UIViewRepresentable {
     }
 }
 
-@MainActor
-final class CameraController: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
+final class CameraController: NSObject, ObservableObject, @unchecked Sendable, AVCapturePhotoCaptureDelegate {
     let session = AVCaptureSession()
     private let queue = DispatchQueue(label: "camera.session")
     private let output = AVCapturePhotoOutput()

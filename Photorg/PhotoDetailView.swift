@@ -91,7 +91,8 @@ struct PhotoDetailView: View {
             }
         }
         .task(id: photo.id) {
-            self.fullImage = await Task.detached { ImageStore.loadImage(for: photo.id) }.value
+            let photoID = photo.id
+            self.fullImage = await Task.detached { ImageStore.loadImage(for: photoID) }.value
         }
         .sheet(isPresented: $showShare) {
             ShareSheet(items: shareItems)

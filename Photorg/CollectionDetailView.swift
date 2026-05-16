@@ -52,27 +52,7 @@ struct CollectionDetailView: View {
                                 PhotoThumb(photo: photo)
                                     .frame(height: 110)
                                     .clipped()
-                                    .overlay(
-                                        ZStack {
-                                            if selectedPhotos.contains(photo) {
-                                                Color.black.opacity(0.3)
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.title)
-                                                    .foregroundStyle(.white, Color.accentColor)
-                                            } else {
-                                                VStack {
-                                                    HStack {
-                                                        Spacer()
-                                                        Image(systemName: "circle")
-                                                            .font(.title3)
-                                                            .foregroundStyle(.white)
-                                                            .padding(6)
-                                                    }
-                                                    Spacer()
-                                                }
-                                            }
-                                        }
-                                    )
+                                    .overlay(SelectionOverlay(isSelected: selectedPhotos.contains(photo)))
                             }
                         } else {
                             NavigationLink(value: photo) {
@@ -122,7 +102,7 @@ struct CollectionDetailView: View {
                         .font(.subheadline.weight(.medium))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .glassEffect(.regular.interactive(), shape: .capsule)
+                        .glassEffect(.regular.interactive(), in: .capsule)
                     }
                     Button {
                         showingCamera = true
@@ -220,6 +200,31 @@ struct CollectionDetailView: View {
     }
 }
 
+struct SelectionOverlay: View {
+    let isSelected: Bool
+    var body: some View {
+        ZStack {
+            if isSelected {
+                Color.black.opacity(0.3)
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title)
+                    .foregroundStyle(.white, Color.accentColor)
+            } else {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "circle")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .padding(6)
+                    }
+                    Spacer()
+                }
+            }
+        }
+    }
+}
+
 struct PhotoThumb: View {
     let photo: Photo
     @State private var image: UIImage?
@@ -249,11 +254,13 @@ struct PhotoThumb: View {
             }
         }
         .task(id: photo.id) {
-            let cropped = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-                guard let img = ImageStore.loadImage(for: photo.id) else { return nil }
-                return CropRenderer.render(image: img, normalizedRect: photo.cropRect)
-            }.value
-            self.image = cropped
+            let photoID = photo.id
+            let rect = photo.cropRect
+            let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
+                guard let img = ImageStore.loadImage(for: photoID) else { return nil }
+                return CropRenderer.render(image: img, normalizedRect: rect)
+            }
+            self.image = await task.value
         }
     }
 }

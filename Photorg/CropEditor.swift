@@ -17,7 +17,7 @@ struct CropEditor: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
-                    .overlay(cropOverlay(in: displayed))
+                cropOverlay(in: displayed)
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .contentShape(Rectangle())

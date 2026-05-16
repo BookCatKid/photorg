@@ -19,7 +19,6 @@ targets:
       - path: Photorg
         excludes:
           - "**/.DS_Store"
-          - "**/Assets.xcassets"
     info:
       path: Photorg/Info.plist
       properties:
@@ -34,5 +33,5 @@ targets:
         NSPhotoLibraryAddUsageDescription: "Photorg can export cropped renders back to your Photos library."
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.Photorg
+        PRODUCT_BUNDLE_IDENTIFIER: dev.smrff.Photorg
         GENERATE_INFOPLIST_FILE: NO

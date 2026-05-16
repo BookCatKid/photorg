@@ -79,6 +79,9 @@ struct CollectionsListView: View {
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
                     }
+                    .contextMenu {
+                        Button("Change Quick Collection") { showingQuickPicker = true }
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 8)
@@ -231,9 +234,6 @@ struct CollectionCard: View {
                 }
             }
             .frame(width: 80, height: 80)
-            .onTapGesture(count: 2) {
-                showingCoverPicker = true
-            }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(collection.name)
@@ -261,6 +261,7 @@ struct CollectionCard: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(16)
+        .contentShape(.rect(cornerRadius: 16))
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
@@ -356,7 +357,7 @@ struct CoverThumb: View {
                     .font(.title2)
             }
         }
-        .aspectRatio(1, contentMode: .fill)
+        .aspectRatio(1, contentMode: .fit)
         .clipped()
         .task(id: photo.id) {
             let photoID = photo.id

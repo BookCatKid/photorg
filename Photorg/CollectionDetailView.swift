@@ -230,18 +230,17 @@ struct PhotoThumb: View {
     @State private var image: UIImage?
 
     var body: some View {
-        ZStack {
-            Color(.systemGray5)
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
+        Rectangle()
+            .fill(Color(.systemGray5))
+            .overlay {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                }
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .clipped()
-        .overlay(alignment: .bottomLeading) {
-            if photo.count > 1 {
+            .clipped()
+            .overlay(alignment: .bottomLeading) {
                 HStack(spacing: 3) {
                     Image(systemName: "number")
                         .font(.system(size: 8, weight: .bold))
@@ -254,7 +253,6 @@ struct PhotoThumb: View {
                 .background(Color.black.opacity(0.6), in: Capsule())
                 .padding(4)
             }
-        }
         .task(id: photo.id) {
             let photoID = photo.id
             let task = Task.detached(priority: .userInitiated) { () -> UIImage? in

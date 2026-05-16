@@ -255,10 +255,8 @@ struct PhotoThumb: View {
         }
         .task(id: photo.id) {
             let photoID = photo.id
-            let rect = photo.cropRect
             let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
-                guard let img = ImageStore.loadImage(for: photoID) else { return nil }
-                return CropRenderer.render(image: img, normalizedRect: rect)
+                ImageStore.loadImage(for: photoID)
             }
             self.image = await task.value
         }

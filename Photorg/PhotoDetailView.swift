@@ -8,7 +8,6 @@ struct PhotoDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var fullImage: UIImage?
-    @State private var editing = false
     @State private var showShare = false
     @State private var shareItems: [Any] = []
     @State private var showingCountPicker = false
@@ -17,14 +16,10 @@ struct PhotoDetailView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let img = fullImage {
-                if editing {
-                    CropEditor(image: img, rect: bindingRect(for: img))
-                } else {
-                    ZoomableScrollView {
-                        Image(uiImage: CropRenderer.render(image: img, normalizedRect: photo.cropRect))
-                            .resizable()
-                            .scaledToFit()
-                    }
+                ZoomableScrollView {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFit()
                 }
             } else {
                 ProgressView().tint(.white)
@@ -52,50 +47,13 @@ struct PhotoDetailView: View {
                     }
                 }
             }
-            ToolbarItem(placement: .principal) {
-                if editing {
-                    Button {
-                        editing = false
-                    } label: {
-                        Text("Done")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 7)
-                            .background(Color.accentColor, in: Capsule())
-                    }
-                }
-            }
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 16) {
-                    if editing {
-                        if photo.cropRect != nil {
-                            Button("Reset") {
-                                photo.cropRect = nil
-                            }
-                            .foregroundStyle(.white)
-                        }
-                    } else {
-                        Button {
-                            editing = true
-                        } label: {
-                            Image(systemName: "crop")
-                                .foregroundStyle(.white)
-                        }
-                        Menu {
-                            Button("Export cropped", systemImage: "square.and.arrow.up") { exportCropped() }
-                            Button("Export original", systemImage: "square.and.arrow.up.on.square") { exportOriginal() }
-                            if photo.cropRect != nil {
-                                Button("Reset crop", systemImage: "arrow.uturn.backward") {
-                                    photo.cropRect = nil
-                                }
-                            }
-                            Button("Delete", systemImage: "trash", role: .destructive) { deletePhoto() }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .foregroundStyle(.white)
-                        }
-                    }
+                Menu {
+                    Button("Export", systemImage: "square.and.arrow.up") { exportPhoto() }
+                    Button("Delete", systemImage: "trash", role: .destructive) { deletePhoto() }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(.white)
                 }
             }
         }
@@ -112,33 +70,7 @@ struct PhotoDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func bindingRect(for img: UIImage) -> Binding<CGRect> {
-        Binding(
-            get: {
-                if let existing = photo.cropRect {
-                    return existing
-                }
-                return CGRect(x: 0.05, y: 0.05, width: 0.9, height: 0.9)
-            },
-            set: { newValue in
-                let full = CGRect(x: 0, y: 0, width: 1, height: 1)
-                if newValue == full || (newValue.origin == CGPoint.zero && newValue.size == CGSize(width: 0.9, height: 0.9)) {
-                    photo.cropRect = nil
-                } else {
-                    photo.cropRect = newValue
-                }
-            }
-        )
-    }
-
-    private func exportCropped() {
-        guard let img = fullImage else { return }
-        let rendered = CropRenderer.render(image: img, normalizedRect: photo.cropRect)
-        shareItems = [rendered]
-        showShare = true
-    }
-
-    private func exportOriginal() {
+    private func exportPhoto() {
         let url = ImageStore.url(for: photo.id)
         shareItems = [url]
         showShare = true

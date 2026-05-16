@@ -172,12 +172,10 @@ struct CollectionsListView: View {
 
             let sortedPhotos = collection.photos.sorted { $0.capturedAt < $1.capturedAt }
             for (index, photo) in sortedPhotos.enumerated() {
-                if let img = ImageStore.loadImage(for: photo.id) {
-                    let rendered = CropRenderer.render(image: img, normalizedRect: photo.cropRect)
+                if let img = ImageStore.loadImage(for: photo.id),
+                   let data = img.jpegData(compressionQuality: 0.9) {
                     let filename = String(format: "%03d_%@.jpg", index + 1, photo.id.uuidString)
-                    if let data = rendered.jpegData(compressionQuality: 0.9) {
-                        try? data.write(to: tempDir.appendingPathComponent(filename))
-                    }
+                    try? data.write(to: tempDir.appendingPathComponent(filename))
                 }
                 await MainActor.run {
                     exportProgress = Double(index + 1) / Double(sortedPhotos.count)
@@ -291,14 +289,10 @@ struct CollectionCard: View {
     private func loadCover() async {
         if let cover = collection.coverPhoto {
             let coverID = cover.id
-            let rect = cover.cropRect
             let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
-                guard let img = ImageStore.loadImage(for: coverID) else { return nil }
-                return CropRenderer.render(image: img, normalizedRect: rect)
+                ImageStore.loadImage(for: coverID)
             }
-            if let img = await task.value {
-                coverImage = img
-            }
+            coverImage = await task.value
         } else {
             coverImage = nil
         }
@@ -361,14 +355,10 @@ struct CoverThumb: View {
         .clipped()
         .task(id: photo.id) {
             let photoID = photo.id
-            let rect = photo.cropRect
             let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
-                guard let img = ImageStore.loadImage(for: photoID) else { return nil }
-                return CropRenderer.render(image: img, normalizedRect: rect)
+                ImageStore.loadImage(for: photoID)
             }
-            if let img = await task.value {
-                image = img
-            }
+            image = await task.value
         }
     }
 }

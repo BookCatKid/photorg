@@ -39,11 +39,6 @@ final class Photo {
     var capturedAt: Date
     var count: Int = 1
 
-    var cropX: Double?
-    var cropY: Double?
-    var cropW: Double?
-    var cropH: Double?
-
     var orientationRaw: Int
 
     var collection: PhotoCollection?
@@ -53,20 +48,5 @@ final class Photo {
         self.capturedAt = Date()
         self.orientationRaw = orientation
         self.count = 1
-    }
-
-    var cropRect: CGRect? {
-        get {
-            guard let x = cropX, let y = cropY, let w = cropW, let h = cropH else { return nil }
-            return CGRect(x: x, y: y, width: w, height: h)
-        }
-        set {
-            if let r = newValue {
-                cropX = r.origin.x; cropY = r.origin.y
-                cropW = r.size.width; cropH = r.size.height
-            } else {
-                cropX = nil; cropY = nil; cropW = nil; cropH = nil
-            }
-        }
     }
 }

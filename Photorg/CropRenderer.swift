@@ -10,9 +10,12 @@ enum CropRenderer {
     static func render(image: UIImage, normalizedRect rect: CGRect?) -> UIImage {
         guard let rect, let cg = image.cgImage else { return image }
         let w = CGFloat(cg.width), h = CGFloat(cg.height)
+        // CGImage has bottom-left origin; our normalized rect uses top-left (UIKit convention),
+        // so we must flip the Y axis before cropping.
+        let flippedY = 1.0 - rect.origin.y - rect.size.height
         let pixel = CGRect(
             x: floor(rect.origin.x * w),
-            y: floor(rect.origin.y * h),
+            y: floor(flippedY * h),
             width: floor(rect.size.width * w),
             height: floor(rect.size.height * h)
         ).integral

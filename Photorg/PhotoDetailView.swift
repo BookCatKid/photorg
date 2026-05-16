@@ -54,7 +54,16 @@ struct PhotoDetailView: View {
             }
             ToolbarItem(placement: .principal) {
                 if editing {
-                    Button("Done") { editing = false }.bold().foregroundStyle(.white)
+                    Button {
+                        editing = false
+                    } label: {
+                        Text("Done")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 7)
+                            .background(Color.accentColor, in: Capsule())
+                    }
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {

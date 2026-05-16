@@ -16,6 +16,8 @@ struct CollectionDetailView: View {
     @State private var showingCamera = false
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var sortOption: PhotoSortOption = .newestFirst
+    @State private var isSelecting = false
+    @State private var selectedPhotos: Set<Photo> = []
 
     private let columns = [GridItem(.adaptive(minimum: 110), spacing: 2)]
 
@@ -39,10 +41,45 @@ struct CollectionDetailView: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 2) {
                     ForEach(sortedPhotos) { photo in
-                        NavigationLink(value: photo) {
-                            PhotoThumb(photo: photo)
-                                .frame(height: 110)
-                                .clipped()
+                        if isSelecting {
+                            Button {
+                                if selectedPhotos.contains(photo) {
+                                    selectedPhotos.remove(photo)
+                                } else {
+                                    selectedPhotos.insert(photo)
+                                }
+                            } label: {
+                                PhotoThumb(photo: photo)
+                                    .frame(height: 110)
+                                    .clipped()
+                                    .overlay(
+                                        ZStack {
+                                            if selectedPhotos.contains(photo) {
+                                                Color.black.opacity(0.3)
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.title)
+                                                    .foregroundStyle(.white, Color.accentColor)
+                                            } else {
+                                                VStack {
+                                                    HStack {
+                                                        Spacer()
+                                                        Image(systemName: "circle")
+                                                            .font(.title3)
+                                                            .foregroundStyle(.white)
+                                                            .padding(6)
+                                                    }
+                                                    Spacer()
+                                                }
+                                            }
+                                        }
+                                    )
+                            }
+                        } else {
+                            NavigationLink(value: photo) {
+                                PhotoThumb(photo: photo)
+                                    .frame(height: 110)
+                                    .clipped()
+                            }
                         }
                     }
                 }
@@ -55,33 +92,55 @@ struct CollectionDetailView: View {
             PhotoDetailView(photo: p)
         }
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 10) {
-                PhotosPicker(selection: $pickerItems, matching: .images, photoLibrary: .shared()) {
-                    HStack {
-                        Image(systemName: "photo.on.rectangle")
-                        Text("Import")
+            if isSelecting {
+                VStack {
+                    Button(role: .destructive) {
+                        deleteSelectedPhotos()
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete Selected (\(selectedPhotos.count))")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.red, in: Capsule())
+                        .foregroundStyle(.white)
                     }
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(.ultraThinMaterial, in: Capsule())
+                    .disabled(selectedPhotos.isEmpty)
+                    .opacity(selectedPhotos.isEmpty ? 0.5 : 1)
                 }
-                Button {
-                    showingCamera = true
-                } label: {
-                    HStack {
-                        Image(systemName: "camera.fill")
-                        Text("Shoot")
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+            } else {
+                VStack(spacing: 10) {
+                    PhotosPicker(selection: $pickerItems, matching: .images, photoLibrary: .shared()) {
+                        HStack {
+                            Image(systemName: "photo.on.rectangle")
+                            Text("Import")
+                        }
+                        .font(.subheadline.weight(.medium))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .glassEffect(.regular.interactive(), shape: .capsule)
                     }
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.accentColor, in: Capsule())
-                    .foregroundStyle(.white)
+                    Button {
+                        showingCamera = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "camera.fill")
+                            Text("Shoot")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.accentColor, in: Capsule())
+                        .foregroundStyle(.white)
+                    }
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
         }
         .fullScreenCover(isPresented: $showingCamera) {
             CameraView { data, orientation in
@@ -94,15 +153,29 @@ struct CollectionDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Picker("Sort By", selection: $sortOption) {
-                        ForEach(PhotoSortOption.allCases, id: \.self) { option in
-                            Text(option.rawValue).tag(option)
+                HStack(spacing: 16) {
+                    Button {
+                        isSelecting.toggle()
+                        if !isSelecting {
+                            selectedPhotos.removeAll()
+                        }
+                    } label: {
+                        Text(isSelecting ? "Cancel" : "Select")
+                    }
+                    .foregroundStyle(.white)
+                    
+                    if !isSelecting {
+                        Menu {
+                            Picker("Sort By", selection: $sortOption) {
+                                ForEach(PhotoSortOption.allCases, id: \.self) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .foregroundStyle(.white)
                         }
                     }
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .foregroundStyle(.white)
                 }
             }
         }
@@ -135,6 +208,15 @@ struct CollectionDetailView: View {
             }
         }
         pickerItems = []
+    }
+
+    private func deleteSelectedPhotos() {
+        for photo in selectedPhotos {
+            ImageStore.delete(photo.id)
+            context.delete(photo)
+        }
+        selectedPhotos.removeAll()
+        isSelecting = false
     }
 }
 

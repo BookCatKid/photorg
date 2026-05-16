@@ -92,7 +92,7 @@ struct CropEditor: View {
         .frame(width: hitAreaSize, height: hitAreaSize)
         .position(center)
         .contentShape(Rectangle().size(CGSize(width: hitAreaSize, height: hitAreaSize)))
-        .gesture(
+        .highPriorityGesture(
             DragGesture()
                 .onChanged { value in
                     if dragStartRect == nil {

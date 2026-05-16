@@ -11,6 +11,10 @@ struct CollectionsListView: View {
     @State private var collectionToDelete: PhotoCollection?
     @State private var showingExportProgress = false
     @State private var exportProgress: Double = 0
+    @State private var collectionToPickCover: PhotoCollection?
+    @AppStorage("quickCollectionID") private var quickCollectionID: String = ""
+    @State private var showingQuickPicker = false
+    @State private var showingQuickCamera = false
 
     var body: some View {
         NavigationStack {
@@ -39,9 +43,9 @@ struct CollectionsListView: View {
                                         Label("Delete", systemImage: "trash")
                                     }
                                     Button {
-                                        collection.coverPhotoID = nil
+                                        collectionToPickCover = collection
                                     } label: {
-                                        Label("Remove Cover", systemImage: "photo")
+                                        Label("Choose Cover", systemImage: "photo")
                                     }
                                     Button {
                                         exportCollectionAsZip(collection)
@@ -54,6 +58,34 @@ struct CollectionsListView: View {
                         .padding()
                     }
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                VStack {
+                    Button {
+                        if collections.first(where: { $0.id.uuidString == quickCollectionID }) != nil {
+                            showingQuickCamera = true
+                        } else {
+                            showingQuickPicker = true
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "camera.badge.bolt")
+                            Text("Quick Photo")
+                        }
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.accentColor, in: Capsule())
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+                .background(
+                    LinearGradient(colors: [.black, .clear], startPoint: .bottom, endPoint: .top)
+                        .ignoresSafeArea()
+                )
             }
             .navigationTitle("Collections")
             .navigationDestination(for: PhotoCollection.self) { c in
@@ -90,6 +122,34 @@ struct CollectionsListView: View {
             .sheet(isPresented: $showingExportProgress) {
                 ExportProgressSheet(progress: $exportProgress)
             }
+            .sheet(item: $collectionToPickCover) { c in
+                CoverPickerSheet(collection: c)
+            }
+            .sheet(isPresented: $showingQuickPicker) {
+                QuickCollectionPickerSheet(collections: collections, selectedID: $quickCollectionID)
+            }
+            .fullScreenCover(isPresented: $showingQuickCamera) {
+                CameraView { data, orientation in
+                    if let collection = collections.first(where: { $0.id.uuidString == quickCollectionID }) {
+                        ingest(data: data, orientation: orientation, into: collection)
+                    }
+                }
+                .ignoresSafeArea()
+            }
+        }
+    }
+
+    private func ingest(data: Data, orientation: Int, into collection: PhotoCollection) {
+        let photo = Photo(orientation: orientation)
+        photo.collection = collection
+        if collection.coverPhotoID == nil {
+            collection.coverPhotoID = photo.id
+        }
+        do {
+            try ImageStore.saveOriginalBytes(data, for: photo.id)
+            context.insert(photo)
+        } catch {
+            print("Failed to save capture: \(error)")
         }
     }
 
@@ -153,7 +213,7 @@ struct CollectionCard: View {
         HStack(spacing: 16) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
+                    .glassEffect(.regular)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.accentColor.opacity(0.1))
@@ -201,8 +261,7 @@ struct CollectionCard: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular.interactive(), shape: .rect(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
@@ -318,5 +377,40 @@ struct ExportProgressSheet: View {
                 .font(.headline)
         }
         .padding(40)
+    }
+}
+struct QuickCollectionPickerSheet: View {
+    let collections: [PhotoCollection]
+    @Binding var selectedID: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(collections) { collection in
+                    Button {
+                        selectedID = collection.id.uuidString
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Text(collection.name)
+                            Spacer()
+                            if collection.id.uuidString == selectedID {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                    }
+                    .foregroundStyle(.primary)
+                }
+            }
+            .navigationTitle("Select Quick Collection")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
     }
 }

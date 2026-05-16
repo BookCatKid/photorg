@@ -20,9 +20,11 @@ struct PhotoDetailView: View {
                 if editing {
                     CropEditor(image: img, rect: bindingRect(for: img))
                 } else {
-                    Image(uiImage: CropRenderer.render(image: img, normalizedRect: photo.cropRect))
-                        .resizable()
-                        .scaledToFit()
+                    ZoomableScrollView {
+                        Image(uiImage: CropRenderer.render(image: img, normalizedRect: photo.cropRect))
+                            .resizable()
+                            .scaledToFit()
+                    }
                 }
             } else {
                 ProgressView().tint(.white)

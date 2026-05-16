@@ -212,6 +212,16 @@ struct CollectionCard: View {
 
     var body: some View {
         HStack(spacing: 16) {
+            VStack(spacing: 4) {
+                Image(systemName: "number")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Text("\(collection.itemCount)")
+                    .font(.system(.subheadline, design: .rounded).weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 32)
+
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .glassEffect(.regular)
@@ -240,7 +250,6 @@ struct CollectionCard: View {
 
                 HStack(spacing: 12) {
                     Label("\(collection.photoCount)", systemImage: "photo")
-                    Label("\(collection.itemCount)", systemImage: "number")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

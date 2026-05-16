@@ -241,14 +241,18 @@ struct PhotoThumb: View {
                 VStack {
                     Spacer()
                     HStack {
+                        HStack(spacing: 3) {
+                            Image(systemName: "number")
+                                .font(.system(size: 8, weight: .bold))
+                            Text("\(photo.count)")
+                                .font(.caption2.weight(.bold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.6), in: Capsule())
+                        .padding(4)
                         Spacer()
-                        Text("\(photo.count)")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.black.opacity(0.6), in: Capsule())
-                            .padding(4)
                     }
                 }
             }

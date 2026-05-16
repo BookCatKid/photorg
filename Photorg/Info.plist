@@ -27,10 +27,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photorg can import existing photos from your library into a collection.</string>
 	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIColorName</key>
-		<string>BackgroundColor</string>
-	</dict>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

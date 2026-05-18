@@ -206,6 +206,16 @@ struct CollectionsListView: View {
 struct QuickCameraModeView: View {
     private static let minSwipeDistanceForCollectionSwitch: CGFloat = 30
     private static let horizontalSwipeDominanceRatio: CGFloat = 1.0
+    private static let collectionIconSize: CGFloat = 34
+    private static let activeIconScale: CGFloat = 1.08
+    private static let inactiveIconOpacity: CGFloat = 0.75
+    private static let activeStrokeOpacity: CGFloat = 0.95
+    private static let inactiveStrokeOpacity: CGFloat = 0.25
+    private static let activeStrokeWidth: CGFloat = 2
+    private static let inactiveStrokeWidth: CGFloat = 1
+    private static let checkmarkOffsetX: CGFloat = 11
+    private static let checkmarkOffsetY: CGFloat = -11
+    private static let iconLabelMaxWidth: CGFloat = 56
 
     let collections: [PhotoCollection]
     @Binding var selectedID: String
@@ -238,35 +248,102 @@ struct QuickCameraModeView: View {
             )
 
             if let activeCollection {
-                HStack(spacing: 8) {
-                    Button {
-                        goToPreviousCollection()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(.black.opacity(0.5), in: Circle())
+                VStack(spacing: 10) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            ForEach(collections.indices, id: \.self) { index in
+                                let collection = collections[index]
+                                let isActive = index == currentIndex
+                                let normalizedName = normalizedCollectionName(collection)
+                                Button {
+                                    selectCollection(at: index)
+                                } label: {
+                                    VStack(spacing: 3) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(isActive ? Color.accentColor : Color.black.opacity(Self.inactiveIconOpacity))
+                                                .frame(width: Self.collectionIconSize, height: Self.collectionIconSize)
+                                            Text(collectionIconText(for: collection))
+                                                .font(.caption.weight(.bold))
+                                                .foregroundStyle(.white)
+                                            if isActive {
+                                                Image(systemName: "checkmark")
+                                                    .font(.system(size: 9, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                                    .offset(x: Self.checkmarkOffsetX, y: Self.checkmarkOffsetY)
+                                            }
+                                        }
+                                        .overlay(
+                                            Circle()
+                                                .stroke(
+                                                    Color.white.opacity(isActive ? Self.activeStrokeOpacity : Self.inactiveStrokeOpacity),
+                                                    lineWidth: isActive ? Self.activeStrokeWidth : Self.inactiveStrokeWidth
+                                                )
+                                        )
+                                        .scaleEffect(isActive ? Self.activeIconScale : 1.0)
+                                        Text(collection.name)
+                                            .font(.caption2.weight(isActive ? .semibold : .regular))
+                                            .foregroundStyle(.white.opacity(isActive ? 1.0 : 0.85))
+                                            .lineLimit(1)
+                                            .frame(maxWidth: Self.iconLabelMaxWidth)
+                                    }
+                                }
+                                .accessibilityLabel(normalizedName.isEmpty ? "Unnamed collection" : normalizedName)
+                                .accessibilityHint(isActive ? "Current collection" : "Switch to this collection")
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    Text(activeCollection.name)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.black.opacity(0.5), in: Capsule())
-                    Button {
-                        goToNextCollection()
-                    } label: {
-                        Image(systemName: "chevron.right")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(.black.opacity(0.5), in: Circle())
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                    HStack(spacing: 8) {
+                        Button {
+                            goToPreviousCollection()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(.black.opacity(0.5), in: Circle())
+                        }
+                        Menu {
+                            ForEach(collections.indices, id: \.self) { index in
+                                let collection = collections[index]
+                                Button {
+                                    selectCollection(at: index)
+                                } label: {
+                                    if index == currentIndex {
+                                        Label(collection.name, systemImage: "checkmark")
+                                    } else {
+                                        Text(collection.name)
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(activeCollection.name)
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption.weight(.bold))
+                            }
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.black.opacity(0.5), in: Capsule())
+                        }
+                        Button {
+                            goToNextCollection()
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(.black.opacity(0.5), in: Circle())
+                        }
                     }
+                    .foregroundStyle(.white)
                 }
-                .foregroundStyle(.white)
                 .padding(.top, 72)
-                .padding(.horizontal)
             }
         }
         .onAppear {
@@ -289,14 +366,28 @@ struct QuickCameraModeView: View {
 
     private func goToNextCollection() {
         guard !collections.isEmpty else { return }
-        currentIndex = (currentIndex + 1) % collections.count
-        selectedID = collections[currentIndex].id.uuidString
+        selectCollection(at: (currentIndex + 1) % collections.count)
     }
 
     private func goToPreviousCollection() {
         guard !collections.isEmpty else { return }
-        currentIndex = (currentIndex - 1 + collections.count) % collections.count
+        selectCollection(at: (currentIndex - 1 + collections.count) % collections.count)
+    }
+
+    private func selectCollection(at index: Int) {
+        guard collections.indices.contains(index) else { return }
+        currentIndex = index
         selectedID = collections[currentIndex].id.uuidString
+    }
+
+    private func collectionIconText(for collection: PhotoCollection) -> String {
+        let trimmedName = normalizedCollectionName(collection)
+        guard let initial = trimmedName.first else { return "C" }
+        return String(initial).uppercased()
+    }
+
+    private func normalizedCollectionName(_ collection: PhotoCollection) -> String {
+        collection.name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

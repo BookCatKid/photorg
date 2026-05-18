@@ -245,19 +245,35 @@ struct QuickCameraModeView: View {
                                 Button {
                                     selectCollection(at: index)
                                 } label: {
-                                    ZStack {
-                                        Circle()
-                                            .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(0.55))
-                                            .frame(width: 34, height: 34)
-                                        Text(String(collection.name.prefix(1)).uppercased())
-                                            .font(.caption.weight(.bold))
-                                            .foregroundStyle(.white)
+                                    VStack(spacing: 3) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(0.55))
+                                                .frame(width: 34, height: 34)
+                                            Text(String(collection.name.prefix(1)).uppercased())
+                                                .font(.caption.weight(.bold))
+                                                .foregroundStyle(.white)
+                                            if index == currentIndex {
+                                                Image(systemName: "checkmark")
+                                                    .font(.system(size: 9, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                                    .offset(x: 11, y: -11)
+                                            }
+                                        }
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white.opacity(index == currentIndex ? 0.95 : 0.25), lineWidth: index == currentIndex ? 2 : 1)
+                                        )
+                                        .scaleEffect(index == currentIndex ? 1.08 : 1.0)
+                                        Text(collection.name)
+                                            .font(.caption2.weight(index == currentIndex ? .semibold : .regular))
+                                            .foregroundStyle(.white.opacity(index == currentIndex ? 1.0 : 0.85))
+                                            .lineLimit(1)
+                                            .frame(maxWidth: 56)
                                     }
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color.white.opacity(index == currentIndex ? 0.95 : 0.25), lineWidth: 1)
-                                    )
                                 }
+                                .accessibilityLabel(collection.name)
+                                .accessibilityHint(index == currentIndex ? "Current collection" : "Switch to this collection")
                             }
                         }
                         .padding(.horizontal)

@@ -241,7 +241,8 @@ struct QuickCameraModeView: View {
                 VStack(spacing: 10) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
-                            ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
+                            ForEach(collections.indices, id: \.self) { index in
+                                let collection = collections[index]
                                 Button {
                                     selectCollection(at: index)
                                 } label: {
@@ -250,7 +251,7 @@ struct QuickCameraModeView: View {
                                             Circle()
                                                 .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(0.55))
                                                 .frame(width: 34, height: 34)
-                                            Text(String(collection.name.prefix(1)).uppercased())
+                                            Text(collectionIconText(for: collection))
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(.white)
                                             if index == currentIndex {
@@ -291,7 +292,8 @@ struct QuickCameraModeView: View {
                                 .background(.black.opacity(0.5), in: Circle())
                         }
                         Menu {
-                            ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
+                            ForEach(collections.indices, id: \.self) { index in
+                                let collection = collections[index]
                                 Button {
                                     selectCollection(at: index)
                                 } label: {
@@ -361,6 +363,11 @@ struct QuickCameraModeView: View {
         guard collections.indices.contains(index) else { return }
         currentIndex = index
         selectedID = collections[currentIndex].id.uuidString
+    }
+
+    private func collectionIconText(for collection: PhotoCollection) -> String {
+        let initial = collection.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)
+        return initial.isEmpty ? "?" : String(initial).uppercased()
     }
 }
 

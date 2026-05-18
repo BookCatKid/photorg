@@ -72,12 +72,16 @@ enum ImageStore {
                 request.addResource(with: .photo, data: data, options: nil)
             }) { success, error in
                 if !success {
-                    let fallbackError = NSError(
-                        domain: cameraRollErrorDomain,
-                        code: 1,
-                        userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
-                    )
-                    print("Failed to save to camera roll: \(error ?? fallbackError)")
+                    if let error {
+                        print("Failed to save to camera roll: \(error)")
+                    } else {
+                        let fallbackError = NSError(
+                            domain: cameraRollErrorDomain,
+                            code: 1,
+                            userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
+                        )
+                        print("Failed to save to camera roll with unknown Photos error: \(fallbackError)")
+                    }
                 }
             }
         }

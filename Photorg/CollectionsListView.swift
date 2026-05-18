@@ -204,7 +204,7 @@ struct CollectionsListView: View {
 }
 
 struct QuickCameraModeView: View {
-    private static let minimumSwipeDistance: CGFloat = 30
+    private static let minSwipeDistanceForCollectionSwitch: CGFloat = 30
 
     let collections: [PhotoCollection]
     @Binding var selectedID: String
@@ -225,7 +225,7 @@ struct QuickCameraModeView: View {
                 }
             }
             .gesture(
-                DragGesture(minimumDistance: Self.minimumSwipeDistance)
+                DragGesture(minimumDistance: Self.minSwipeDistanceForCollectionSwitch)
                     .onEnded { value in
                         guard abs(value.translation.width) > abs(value.translation.height) else { return }
                         if value.translation.width < 0 {

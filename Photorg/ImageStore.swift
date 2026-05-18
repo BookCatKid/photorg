@@ -3,10 +3,14 @@ import UIKit
 import ImageIO
 import MobileCoreServices
 import UniformTypeIdentifiers
+import Photos
 
 /// On-disk store for original image bytes. The DB only references photos by UUID;
 /// the bytes live here untouched, so cropping is always non-destructive.
 enum ImageStore {
+    private static let cameraRollErrorDomain = "ImageStore.CameraRoll"
+    private static let unknownCameraRollErrorCode = 1
+
     static let directory: URL = {
         let fm = FileManager.default
         let base = try! fm.url(for: .applicationSupportDirectory,
@@ -25,6 +29,12 @@ enum ImageStore {
     /// Save image data as-is when we already have HEIC/JPEG bytes (preferred — no re-encode).
     static func saveOriginalBytes(_ data: Data, for id: UUID) throws {
         try data.write(to: url(for: id), options: .atomic)
+    }
+
+    /// Save a capture to app storage and asynchronously mirror it to Photos.
+    static func saveCapture(_ data: Data, for id: UUID) throws {
+        try saveOriginalBytes(data, for: id)
+        saveToCameraRoll(data)
     }
 
     /// Fallback: encode a UIImage to HEIC at quality 1.0 (lossless-ish; only used if raw bytes
@@ -52,6 +62,38 @@ enum ImageStore {
 
     static func delete(_ id: UUID) {
         try? FileManager.default.removeItem(at: url(for: id))
+    }
+
+    /// Save raw photo bytes into the user's Photos library.
+    static func saveToCameraRoll(_ data: Data) {
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        let handleStatus: (PHAuthorizationStatus) -> Void = { status in
+            guard status == .authorized || status == .limited else { return }
+            PHPhotoLibrary.shared().performChanges({
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: .photo, data: data, options: nil)
+            }) { success, error in
+                if !success {
+                    if let error {
+                        print("Failed to save to camera roll: \(error)")
+                    } else {
+                        let fallbackError = NSError(
+                            domain: cameraRollErrorDomain,
+                            code: unknownCameraRollErrorCode,
+                            userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
+                        )
+                        print("Failed to save to camera roll with unknown Photos error: \(fallbackError)")
+                    }
+                }
+            }
+        }
+        if status == .notDetermined {
+            PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
+                handleStatus(newStatus)
+            }
+        } else {
+            handleStatus(status)
+        }
     }
 }
 

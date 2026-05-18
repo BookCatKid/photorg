@@ -228,9 +228,9 @@ struct QuickCameraModeView: View {
                 DragGesture(minimumDistance: Self.minimumSwipeDistance)
                     .onEnded { value in
                         guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                        if value.translation.width < -Self.minimumSwipeDistance {
+                        if value.translation.width < 0 {
                             goToNextCollection()
-                        } else if value.translation.width > Self.minimumSwipeDistance {
+                        } else if value.translation.width > 0 {
                             goToPreviousCollection()
                         }
                     }

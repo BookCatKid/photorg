@@ -33,7 +33,7 @@ enum ImageStore {
     /// Save a capture to app storage and asynchronously mirror it to Photos.
     static func saveCapture(_ data: Data, for id: UUID) throws {
         try saveOriginalBytes(data, for: id)
-        Task { await saveToCameraRoll(data) }
+        saveToCameraRoll(data)
     }
 
     /// Fallback: encode a UIImage to HEIC at quality 1.0 (lossless-ish; only used if raw bytes
@@ -64,29 +64,22 @@ enum ImageStore {
     }
 
     /// Save raw photo bytes into the user's Photos library.
-    static func saveToCameraRoll(_ data: Data) async {
-        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { return }
-        do {
-            try await withCheckedThrowingContinuation { cont in
-                PHPhotoLibrary.shared().performChanges({
-                    let request = PHAssetCreationRequest.forAsset()
-                    request.addResource(with: .photo, data: data, options: nil)
-                }) { success, error in
-                    if success {
-                        cont.resume(returning: ())
-                    } else {
-                        let fallbackError = NSError(
-                            domain: cameraRollErrorDomain,
-                            code: 1,
-                            userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
-                        )
-                        cont.resume(throwing: error ?? fallbackError)
-                    }
+    static func saveToCameraRoll(_ data: Data) {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else { return }
+            PHPhotoLibrary.shared().performChanges({
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: .photo, data: data, options: nil)
+            }) { success, error in
+                if !success {
+                    let fallbackError = NSError(
+                        domain: cameraRollErrorDomain,
+                        code: 1,
+                        userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
+                    )
+                    print("Failed to save to camera roll: \(error ?? fallbackError)")
                 }
             }
-        } catch {
-            print("Failed to save to camera roll: \(error)")
         }
     }
 }

@@ -147,8 +147,7 @@ struct CollectionsListView: View {
             collection.coverPhotoID = photo.id
         }
         do {
-            try ImageStore.saveOriginalBytes(data, for: photo.id)
-            Task { await ImageStore.saveToCameraRoll(data) }
+            try ImageStore.saveCapture(data, for: photo.id)
             context.insert(photo)
         } catch {
             print("Failed to save capture: \(error)")

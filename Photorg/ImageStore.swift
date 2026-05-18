@@ -30,6 +30,12 @@ enum ImageStore {
         try data.write(to: url(for: id), options: .atomic)
     }
 
+    /// Save a capture to app storage and asynchronously mirror it to Photos.
+    static func saveCapture(_ data: Data, for id: UUID) throws {
+        try saveOriginalBytes(data, for: id)
+        Task { await saveToCameraRoll(data) }
+    }
+
     /// Fallback: encode a UIImage to HEIC at quality 1.0 (lossless-ish; only used if raw bytes
     /// aren't available, e.g. some PHPicker paths).
     static func saveAsHEIC(_ image: UIImage, for id: UUID) throws {
@@ -62,7 +68,7 @@ enum ImageStore {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else { return }
         do {
-            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            try await withCheckedThrowingContinuation { cont in
                 PHPhotoLibrary.shared().performChanges({
                     let request = PHAssetCreationRequest.forAsset()
                     request.addResource(with: .photo, data: data, options: nil)

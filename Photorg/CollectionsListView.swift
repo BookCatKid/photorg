@@ -253,18 +253,19 @@ struct QuickCameraModeView: View {
                         HStack(spacing: 10) {
                             ForEach(collections.indices, id: \.self) { index in
                                 let collection = collections[index]
+                                let isActive = index == currentIndex
                                 Button {
                                     selectCollection(at: index)
                                 } label: {
                                     VStack(spacing: 3) {
                                         ZStack {
                                             Circle()
-                                                .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(Self.inactiveIconOpacity))
+                                                .fill(isActive ? Color.accentColor : Color.black.opacity(Self.inactiveIconOpacity))
                                                 .frame(width: Self.collectionIconSize, height: Self.collectionIconSize)
                                             Text(collectionIconText(for: collection))
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(.white)
-                                            if index == currentIndex {
+                                            if isActive {
                                                 Image(systemName: "checkmark")
                                                     .font(.system(size: 9, weight: .bold))
                                                     .foregroundStyle(.white)
@@ -274,20 +275,20 @@ struct QuickCameraModeView: View {
                                         .overlay(
                                             Circle()
                                                 .stroke(
-                                                    Color.white.opacity(index == currentIndex ? Self.activeStrokeOpacity : Self.inactiveStrokeOpacity),
-                                                    lineWidth: index == currentIndex ? Self.activeStrokeWidth : Self.inactiveStrokeWidth
+                                                    Color.white.opacity(isActive ? Self.activeStrokeOpacity : Self.inactiveStrokeOpacity),
+                                                    lineWidth: isActive ? Self.activeStrokeWidth : Self.inactiveStrokeWidth
                                                 )
                                         )
-                                        .scaleEffect(index == currentIndex ? Self.activeIconScale : 1.0)
+                                        .scaleEffect(isActive ? Self.activeIconScale : 1.0)
                                         Text(collection.name)
-                                            .font(.caption2.weight(index == currentIndex ? .semibold : .regular))
-                                            .foregroundStyle(.white.opacity(index == currentIndex ? 1.0 : 0.85))
+                                            .font(.caption2.weight(isActive ? .semibold : .regular))
+                                            .foregroundStyle(.white.opacity(isActive ? 1.0 : 0.85))
                                             .lineLimit(1)
                                             .frame(maxWidth: Self.iconLabelMaxWidth)
                                     }
                                 }
-                                .accessibilityLabel(collection.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unnamed collection" : collection.name)
-                                .accessibilityHint(index == currentIndex ? "Current collection" : "Switch to this collection")
+                                .accessibilityLabel(normalizedCollectionName(collection).isEmpty ? "Unnamed collection" : collection.name)
+                                .accessibilityHint(isActive ? "Current collection" : "Switch to this collection")
                             }
                         }
                         .padding(.horizontal)
@@ -379,9 +380,13 @@ struct QuickCameraModeView: View {
     }
 
     private func collectionIconText(for collection: PhotoCollection) -> String {
-        let trimmedName = collection.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedName = normalizedCollectionName(collection)
         guard let initial = trimmedName.first else { return "?" }
         return String(initial).uppercased()
+    }
+
+    private func normalizedCollectionName(_ collection: PhotoCollection) -> String {
+        collection.name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

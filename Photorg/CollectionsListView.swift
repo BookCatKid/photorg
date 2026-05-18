@@ -206,15 +206,6 @@ struct CollectionsListView: View {
 struct QuickCameraModeView: View {
     private static let minSwipeDistanceForCollectionSwitch: CGFloat = 30
     private static let horizontalSwipeDominanceRatio: CGFloat = 1.0
-    private static let collectionIconSize: CGFloat = 34
-    private static let activeIconScale: CGFloat = 1.08
-    private static let inactiveIconOpacity: CGFloat = 0.75
-    private static let activeStrokeOpacity: CGFloat = 0.95
-    private static let inactiveStrokeOpacity: CGFloat = 0.25
-    private static let activeStrokeWidth: CGFloat = 2
-    private static let inactiveStrokeWidth: CGFloat = 1
-    private static let checkmarkOffsetX: CGFloat = 11
-    private static let checkmarkOffsetY: CGFloat = -11
     private static let iconLabelMaxWidth: CGFloat = 56
 
     let collections: [PhotoCollection]
@@ -250,47 +241,34 @@ struct QuickCameraModeView: View {
             if let activeCollection {
                 VStack(spacing: 10) {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(collections.indices, id: \.self) { index in
-                                let collection = collections[index]
-                                let isActive = index == currentIndex
-                                let normalizedName = normalizedCollectionName(collection)
-                                Button {
-                                    selectCollection(at: index)
-                                } label: {
-                                    VStack(spacing: 3) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(isActive ? Color.accentColor : Color.black.opacity(Self.inactiveIconOpacity))
-                                                .frame(width: Self.collectionIconSize, height: Self.collectionIconSize)
-                                            Text(collectionIconText(for: collection))
-                                                .font(.caption.weight(.bold))
-                                                .foregroundStyle(.white)
-                                            if isActive {
-                                                Image(systemName: "checkmark")
-                                                    .font(.system(size: 9, weight: .bold))
-                                                    .foregroundStyle(.white)
-                                                    .offset(x: Self.checkmarkOffsetX, y: Self.checkmarkOffsetY)
-                                            }
+                        HStack(spacing: 0) {
+                            Spacer(minLength: 0)
+                            HStack(spacing: 10) {
+                                ForEach(collections.indices, id: \.self) { index in
+                                    let collection = collections[index]
+                                    let isActive = index == currentIndex
+                                    let normalizedName = normalizedCollectionName(collection)
+                                    Button {
+                                        selectCollection(at: index)
+                                    } label: {
+                                        VStack(spacing: 3) {
+                                            QuickCollectionIcon(
+                                                collection: collection,
+                                                fallbackText: collectionIconText(for: collection),
+                                                isActive: isActive
+                                            )
+                                            Text(collection.name)
+                                                .font(.caption2.weight(isActive ? .semibold : .regular))
+                                                .foregroundStyle(.white.opacity(isActive ? 1.0 : 0.85))
+                                                .lineLimit(1)
+                                                .frame(maxWidth: Self.iconLabelMaxWidth)
                                         }
-                                        .overlay(
-                                            Circle()
-                                                .stroke(
-                                                    Color.white.opacity(isActive ? Self.activeStrokeOpacity : Self.inactiveStrokeOpacity),
-                                                    lineWidth: isActive ? Self.activeStrokeWidth : Self.inactiveStrokeWidth
-                                                )
-                                        )
-                                        .scaleEffect(isActive ? Self.activeIconScale : 1.0)
-                                        Text(collection.name)
-                                            .font(.caption2.weight(isActive ? .semibold : .regular))
-                                            .foregroundStyle(.white.opacity(isActive ? 1.0 : 0.85))
-                                            .lineLimit(1)
-                                            .frame(maxWidth: Self.iconLabelMaxWidth)
                                     }
+                                    .accessibilityLabel(normalizedName.isEmpty ? "Unnamed collection" : normalizedName)
+                                    .accessibilityHint(isActive ? "Current collection" : "Switch to this collection")
                                 }
-                                .accessibilityLabel(normalizedName.isEmpty ? "Unnamed collection" : normalizedName)
-                                .accessibilityHint(isActive ? "Current collection" : "Switch to this collection")
                             }
+                            Spacer(minLength: 0)
                         }
                         .padding(.horizontal)
                     }
@@ -388,6 +366,72 @@ struct QuickCameraModeView: View {
 
     private func normalizedCollectionName(_ collection: PhotoCollection) -> String {
         collection.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private struct QuickCollectionIcon: View {
+    private static let collectionIconSize: CGFloat = 34
+    private static let activeIconScale: CGFloat = 1.08
+    private static let inactiveIconOpacity: CGFloat = 0.75
+    private static let activeStrokeOpacity: CGFloat = 0.95
+    private static let inactiveStrokeOpacity: CGFloat = 0.25
+    private static let activeStrokeWidth: CGFloat = 2
+    private static let inactiveStrokeWidth: CGFloat = 1
+    private static let checkmarkOffsetX: CGFloat = 11
+    private static let checkmarkOffsetY: CGFloat = -11
+
+    let collection: PhotoCollection
+    let fallbackText: String
+    let isActive: Bool
+
+    @State private var coverImage: UIImage?
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(isActive ? Color.accentColor : Color.black.opacity(Self.inactiveIconOpacity))
+                .frame(width: Self.collectionIconSize, height: Self.collectionIconSize)
+            if let coverImage {
+                Image(uiImage: coverImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: Self.collectionIconSize, height: Self.collectionIconSize)
+                    .clipShape(Circle())
+            } else {
+                Text(fallbackText)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+            }
+            if isActive {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.white)
+                    .offset(x: Self.checkmarkOffsetX, y: Self.checkmarkOffsetY)
+            }
+        }
+        .overlay(
+            Circle()
+                .stroke(
+                    Color.white.opacity(isActive ? Self.activeStrokeOpacity : Self.inactiveStrokeOpacity),
+                    lineWidth: isActive ? Self.activeStrokeWidth : Self.inactiveStrokeWidth
+                )
+        )
+        .scaleEffect(isActive ? Self.activeIconScale : 1.0)
+        .task(id: collection.coverPhotoID) {
+            await loadCover()
+        }
+    }
+
+    private func loadCover() async {
+        guard let coverPhoto = collection.coverPhoto else {
+            coverImage = nil
+            return
+        }
+        let coverID = coverPhoto.id
+        let task = Task.detached(priority: .userInitiated) { () -> UIImage? in
+            ImageStore.loadImage(for: coverID)
+        }
+        coverImage = await task.value
     }
 }
 

@@ -238,35 +238,79 @@ struct QuickCameraModeView: View {
             )
 
             if let activeCollection {
-                HStack(spacing: 8) {
-                    Button {
-                        goToPreviousCollection()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(.black.opacity(0.5), in: Circle())
+                VStack(spacing: 10) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
+                                Button {
+                                    selectCollection(at: index)
+                                } label: {
+                                    ZStack {
+                                        Circle()
+                                            .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(0.55))
+                                            .frame(width: 34, height: 34)
+                                        Text(String(collection.name.prefix(1)).uppercased())
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(.white)
+                                    }
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color.white.opacity(index == currentIndex ? 0.95 : 0.25), lineWidth: 1)
+                                    )
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    Text(activeCollection.name)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.black.opacity(0.5), in: Capsule())
-                    Button {
-                        goToNextCollection()
-                    } label: {
-                        Image(systemName: "chevron.right")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(.black.opacity(0.5), in: Circle())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    HStack(spacing: 8) {
+                        Button {
+                            goToPreviousCollection()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(.black.opacity(0.5), in: Circle())
+                        }
+                        Menu {
+                            ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
+                                Button {
+                                    selectCollection(at: index)
+                                } label: {
+                                    if index == currentIndex {
+                                        Label(collection.name, systemImage: "checkmark")
+                                    } else {
+                                        Text(collection.name)
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(activeCollection.name)
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption.weight(.bold))
+                            }
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.black.opacity(0.5), in: Capsule())
+                        }
+                        Button {
+                            goToNextCollection()
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(.black.opacity(0.5), in: Circle())
+                        }
                     }
+                    .foregroundStyle(.white)
                 }
-                .foregroundStyle(.white)
                 .padding(.top, 72)
-                .padding(.horizontal)
             }
         }
         .onAppear {
@@ -296,6 +340,12 @@ struct QuickCameraModeView: View {
     private func goToPreviousCollection() {
         guard !collections.isEmpty else { return }
         currentIndex = (currentIndex - 1 + collections.count) % collections.count
+        selectedID = collections[currentIndex].id.uuidString
+    }
+
+    private func selectCollection(at index: Int) {
+        guard collections.indices.contains(index) else { return }
+        currentIndex = index
         selectedID = collections[currentIndex].id.uuidString
     }
 }

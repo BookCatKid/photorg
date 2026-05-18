@@ -206,6 +206,16 @@ struct CollectionsListView: View {
 struct QuickCameraModeView: View {
     private static let minSwipeDistanceForCollectionSwitch: CGFloat = 30
     private static let horizontalSwipeDominanceRatio: CGFloat = 1.0
+    private static let collectionIconSize: CGFloat = 34
+    private static let activeIconScale: CGFloat = 1.08
+    private static let inactiveIconOpacity: CGFloat = 0.55
+    private static let activeStrokeOpacity: CGFloat = 0.95
+    private static let inactiveStrokeOpacity: CGFloat = 0.25
+    private static let activeStrokeWidth: CGFloat = 2
+    private static let inactiveStrokeWidth: CGFloat = 1
+    private static let checkmarkOffsetX: CGFloat = 11
+    private static let checkmarkOffsetY: CGFloat = -11
+    private static let iconLabelMaxWidth: CGFloat = 56
 
     let collections: [PhotoCollection]
     @Binding var selectedID: String
@@ -249,8 +259,8 @@ struct QuickCameraModeView: View {
                                     VStack(spacing: 3) {
                                         ZStack {
                                             Circle()
-                                                .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(0.55))
-                                                .frame(width: 34, height: 34)
+                                                .fill(index == currentIndex ? Color.accentColor : Color.black.opacity(Self.inactiveIconOpacity))
+                                                .frame(width: Self.collectionIconSize, height: Self.collectionIconSize)
                                             Text(collectionIconText(for: collection))
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(.white)
@@ -258,19 +268,22 @@ struct QuickCameraModeView: View {
                                                 Image(systemName: "checkmark")
                                                     .font(.system(size: 9, weight: .bold))
                                                     .foregroundStyle(.white)
-                                                    .offset(x: 11, y: -11)
+                                                    .offset(x: Self.checkmarkOffsetX, y: Self.checkmarkOffsetY)
                                             }
                                         }
                                         .overlay(
                                             Circle()
-                                                .stroke(Color.white.opacity(index == currentIndex ? 0.95 : 0.25), lineWidth: index == currentIndex ? 2 : 1)
+                                                .stroke(
+                                                    Color.white.opacity(index == currentIndex ? Self.activeStrokeOpacity : Self.inactiveStrokeOpacity),
+                                                    lineWidth: index == currentIndex ? Self.activeStrokeWidth : Self.inactiveStrokeWidth
+                                                )
                                         )
-                                        .scaleEffect(index == currentIndex ? 1.08 : 1.0)
+                                        .scaleEffect(index == currentIndex ? Self.activeIconScale : 1.0)
                                         Text(collection.name)
                                             .font(.caption2.weight(index == currentIndex ? .semibold : .regular))
                                             .foregroundStyle(.white.opacity(index == currentIndex ? 1.0 : 0.85))
                                             .lineLimit(1)
-                                            .frame(maxWidth: 56)
+                                            .frame(maxWidth: Self.iconLabelMaxWidth)
                                     }
                                 }
                                 .accessibilityLabel(collection.name)

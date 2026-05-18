@@ -8,6 +8,8 @@ import Photos
 /// On-disk store for original image bytes. The DB only references photos by UUID;
 /// the bytes live here untouched, so cropping is always non-destructive.
 enum ImageStore {
+    private static let cameraRollErrorDomain = "ImageStore.CameraRoll"
+
     static let directory: URL = {
         let fm = FileManager.default
         let base = try! fm.url(for: .applicationSupportDirectory,
@@ -56,26 +58,29 @@ enum ImageStore {
     }
 
     /// Save raw photo bytes into the user's Photos library.
-    static func saveToCameraRoll(_ data: Data) {
-        Task {
-            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            guard status == .authorized || status == .limited else { return }
-            do {
-                try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-                    PHPhotoLibrary.shared().performChanges({
-                        let request = PHAssetCreationRequest.forAsset()
-                        request.addResource(with: .photo, data: data, options: nil)
-                    }) { success, error in
-                        if success {
-                            cont.resume(returning: ())
-                        } else {
-                            cont.resume(throwing: error ?? NSError(domain: "ImageStore", code: 3))
-                        }
+    static func saveToCameraRoll(_ data: Data) async {
+        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        guard status == .authorized || status == .limited else { return }
+        do {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+                PHPhotoLibrary.shared().performChanges({
+                    let request = PHAssetCreationRequest.forAsset()
+                    request.addResource(with: .photo, data: data, options: nil)
+                }) { success, error in
+                    if success {
+                        cont.resume(returning: ())
+                    } else {
+                        let fallbackError = NSError(
+                            domain: cameraRollErrorDomain,
+                            code: 1,
+                            userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
+                        )
+                        cont.resume(throwing: error ?? fallbackError)
                     }
                 }
-            } catch {
-                print("Failed to save to camera roll: \(error)")
             }
+        } catch {
+            print("Failed to save to camera roll: \(error)")
         }
     }
 }

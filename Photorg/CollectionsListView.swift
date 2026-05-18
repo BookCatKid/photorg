@@ -148,7 +148,7 @@ struct CollectionsListView: View {
         }
         do {
             try ImageStore.saveOriginalBytes(data, for: photo.id)
-            ImageStore.saveToCameraRoll(data)
+            Task { await ImageStore.saveToCameraRoll(data) }
             context.insert(photo)
         } catch {
             print("Failed to save capture: \(error)")
@@ -205,6 +205,8 @@ struct CollectionsListView: View {
 }
 
 struct QuickCameraModeView: View {
+    private static let minimumSwipeDistance: CGFloat = 30
+
     let collections: [PhotoCollection]
     @Binding var selectedID: String
     let onCapture: (Data, Int, PhotoCollection) -> Void
@@ -224,12 +226,12 @@ struct QuickCameraModeView: View {
                 }
             }
             .gesture(
-                DragGesture(minimumDistance: 25)
+                DragGesture(minimumDistance: Self.minimumSwipeDistance)
                     .onEnded { value in
                         guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                        if value.translation.width < -30 {
+                        if value.translation.width < -Self.minimumSwipeDistance {
                             goToNextCollection()
-                        } else if value.translation.width > 30 {
+                        } else if value.translation.width > Self.minimumSwipeDistance {
                             goToPreviousCollection()
                         }
                     }

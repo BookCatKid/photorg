@@ -254,6 +254,7 @@ struct QuickCameraModeView: View {
                             ForEach(collections.indices, id: \.self) { index in
                                 let collection = collections[index]
                                 let isActive = index == currentIndex
+                                let normalizedName = normalizedCollectionName(collection)
                                 Button {
                                     selectCollection(at: index)
                                 } label: {
@@ -287,7 +288,7 @@ struct QuickCameraModeView: View {
                                             .frame(maxWidth: Self.iconLabelMaxWidth)
                                     }
                                 }
-                                .accessibilityLabel(normalizedCollectionName(collection).isEmpty ? "Unnamed collection" : normalizedCollectionName(collection))
+                                .accessibilityLabel(normalizedName.isEmpty ? "Unnamed collection" : normalizedName)
                                 .accessibilityHint(isActive ? "Current collection" : "Switch to this collection")
                             }
                         }

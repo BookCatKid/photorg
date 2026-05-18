@@ -132,10 +132,8 @@ struct CollectionsListView: View {
                 QuickCollectionPickerSheet(collections: collections, selectedID: $quickCollectionID)
             }
             .fullScreenCover(isPresented: $showingQuickCamera) {
-                CameraView { data, orientation in
-                    if let collection = collections.first(where: { $0.id.uuidString == quickCollectionID }) {
-                        ingest(data: data, orientation: orientation, into: collection)
-                    }
+                QuickCameraModeView(collections: collections, selectedID: $quickCollectionID) { data, orientation, collection in
+                    ingest(data: data, orientation: orientation, into: collection)
                 }
                 .ignoresSafeArea()
             }
@@ -150,6 +148,7 @@ struct CollectionsListView: View {
         }
         do {
             try ImageStore.saveOriginalBytes(data, for: photo.id)
+            ImageStore.saveToCameraRoll(data)
             context.insert(photo)
         } catch {
             print("Failed to save capture: \(error)")
@@ -202,6 +201,100 @@ struct CollectionsListView: View {
 
             try? fileManager.removeItem(at: tempDir)
         }
+    }
+}
+
+struct QuickCameraModeView: View {
+    let collections: [PhotoCollection]
+    @Binding var selectedID: String
+    let onCapture: (Data, Int, PhotoCollection) -> Void
+
+    @State private var currentIndex: Int = 0
+
+    private var activeCollection: PhotoCollection? {
+        guard collections.indices.contains(currentIndex) else { return nil }
+        return collections[currentIndex]
+    }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            CameraView { data, orientation in
+                if let activeCollection {
+                    onCapture(data, orientation, activeCollection)
+                }
+            }
+            .gesture(
+                DragGesture(minimumDistance: 25)
+                    .onEnded { value in
+                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                        if value.translation.width < -30 {
+                            goToNextCollection()
+                        } else if value.translation.width > 30 {
+                            goToPreviousCollection()
+                        }
+                    }
+            )
+
+            if let activeCollection {
+                HStack(spacing: 8) {
+                    Button {
+                        goToPreviousCollection()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(.black.opacity(0.5), in: Circle())
+                    }
+                    Text(activeCollection.name)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.black.opacity(0.5), in: Capsule())
+                    Button {
+                        goToNextCollection()
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(.black.opacity(0.5), in: Circle())
+                    }
+                }
+                .foregroundStyle(.white)
+                .padding(.top, 72)
+                .padding(.horizontal)
+            }
+        }
+        .onAppear {
+            syncSelectionFromID()
+        }
+        .onChange(of: selectedID) { _, _ in
+            syncSelectionFromID()
+        }
+    }
+
+    private func syncSelectionFromID() {
+        guard !collections.isEmpty else { return }
+        if let index = collections.firstIndex(where: { $0.id.uuidString == selectedID }) {
+            currentIndex = index
+        } else {
+            currentIndex = 0
+            selectedID = collections[0].id.uuidString
+        }
+    }
+
+    private func goToNextCollection() {
+        guard !collections.isEmpty else { return }
+        currentIndex = (currentIndex + 1) % collections.count
+        selectedID = collections[currentIndex].id.uuidString
+    }
+
+    private func goToPreviousCollection() {
+        guard !collections.isEmpty else { return }
+        currentIndex = (currentIndex - 1 + collections.count) % collections.count
+        selectedID = collections[currentIndex].id.uuidString
     }
 }
 

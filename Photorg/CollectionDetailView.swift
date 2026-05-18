@@ -175,6 +175,7 @@ struct CollectionDetailView: View {
         }
         do {
             try ImageStore.saveOriginalBytes(data, for: photo.id)
+            ImageStore.saveToCameraRoll(data)
             context.insert(photo)
         } catch {
             print("Failed to save capture: \(error)")

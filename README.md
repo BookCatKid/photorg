@@ -6,8 +6,10 @@ An iOS app for shooting photos directly into named collections (e.g. "White Tesl
 
 - Create and manage collections (name + optional note).
 - Pick a collection, then tap the in-app camera button to shoot — every capture is filed automatically into the active collection.
+- Captures are saved both inside Photorg and to the system Photos camera roll.
 - Import existing photos from the system Photo Library into a collection.
 - Export photos to the Photos app / share sheet.
+- Quick Photo mode supports ultra-fast collection switching with swipe-left/right or on-screen arrows.
 
 ## Architecture
 
@@ -32,5 +34,4 @@ An iOS app for shooting photos directly into named collections (e.g. "White Tesl
 1. Install [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 2. From this directory: `xcodegen generate`
 3. Open `Photorg.xcodeproj` in Xcode 15+ and run on an iOS 17+ device (camera needs a real device).
-
 

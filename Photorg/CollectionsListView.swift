@@ -333,14 +333,12 @@ struct QuickCameraModeView: View {
 
     private func goToNextCollection() {
         guard !collections.isEmpty else { return }
-        currentIndex = (currentIndex + 1) % collections.count
-        selectedID = collections[currentIndex].id.uuidString
+        selectCollection(at: (currentIndex + 1) % collections.count)
     }
 
     private func goToPreviousCollection() {
         guard !collections.isEmpty else { return }
-        currentIndex = (currentIndex - 1 + collections.count) % collections.count
-        selectedID = collections[currentIndex].id.uuidString
+        selectCollection(at: (currentIndex - 1 + collections.count) % collections.count)
     }
 
     private func selectCollection(at index: Int) {

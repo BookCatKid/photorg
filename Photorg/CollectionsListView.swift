@@ -292,7 +292,7 @@ struct QuickCameraModeView: View {
                         }
                         .padding(.horizontal)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
                     HStack(spacing: 8) {
                         Button {
@@ -379,8 +379,9 @@ struct QuickCameraModeView: View {
     }
 
     private func collectionIconText(for collection: PhotoCollection) -> String {
-        let initial = collection.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)
-        return initial.isEmpty ? "?" : String(initial).uppercased()
+        let trimmedName = collection.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let initial = trimmedName.first else { return "?" }
+        return String(initial).uppercased()
     }
 }
 

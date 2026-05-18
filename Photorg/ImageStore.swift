@@ -9,6 +9,7 @@ import Photos
 /// the bytes live here untouched, so cropping is always non-destructive.
 enum ImageStore {
     private static let cameraRollErrorDomain = "ImageStore.CameraRoll"
+    private static let unknownCameraRollErrorCode = 1
 
     static let directory: URL = {
         let fm = FileManager.default
@@ -65,7 +66,8 @@ enum ImageStore {
 
     /// Save raw photo bytes into the user's Photos library.
     static func saveToCameraRoll(_ data: Data) {
-        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        let handleStatus: (PHAuthorizationStatus) -> Void = { status in
             guard status == .authorized || status == .limited else { return }
             PHPhotoLibrary.shared().performChanges({
                 let request = PHAssetCreationRequest.forAsset()
@@ -77,13 +79,20 @@ enum ImageStore {
                     } else {
                         let fallbackError = NSError(
                             domain: cameraRollErrorDomain,
-                            code: 1,
+                            code: unknownCameraRollErrorCode,
                             userInfo: [NSLocalizedDescriptionKey: "Failed to save image to camera roll."]
                         )
                         print("Failed to save to camera roll with unknown Photos error: \(fallbackError)")
                     }
                 }
             }
+        }
+        if status == .notDetermined {
+            PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
+                handleStatus(newStatus)
+            }
+        } else {
+            handleStatus(status)
         }
     }
 }

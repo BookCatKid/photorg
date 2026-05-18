@@ -208,7 +208,7 @@ struct QuickCameraModeView: View {
     private static let horizontalSwipeDominanceRatio: CGFloat = 1.0
     private static let collectionIconSize: CGFloat = 34
     private static let activeIconScale: CGFloat = 1.08
-    private static let inactiveIconOpacity: CGFloat = 0.55
+    private static let inactiveIconOpacity: CGFloat = 0.75
     private static let activeStrokeOpacity: CGFloat = 0.95
     private static let inactiveStrokeOpacity: CGFloat = 0.25
     private static let activeStrokeWidth: CGFloat = 2

@@ -286,7 +286,7 @@ struct QuickCameraModeView: View {
                                             .frame(maxWidth: Self.iconLabelMaxWidth)
                                     }
                                 }
-                                .accessibilityLabel(collection.name)
+                                .accessibilityLabel(collection.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unnamed collection" : collection.name)
                                 .accessibilityHint(index == currentIndex ? "Current collection" : "Switch to this collection")
                             }
                         }
@@ -380,7 +380,7 @@ struct QuickCameraModeView: View {
 
     private func collectionIconText(for collection: PhotoCollection) -> String {
         let trimmedName = collection.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let initial = trimmedName.first else { return "•" }
+        guard let initial = trimmedName.first else { return "?" }
         return String(initial).uppercased()
     }
 }
